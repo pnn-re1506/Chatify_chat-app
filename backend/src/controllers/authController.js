@@ -114,4 +114,35 @@ export const signOut = async (req, res) => {
         console.error("Error in signOut:", error);
         return res.status(500).json({ message: "Internal server error" });
     }
-}
+};
+export const refreshToken = async (req, res) => {
+    try {
+        //get refresh token from cookie
+        const token = req.cookies?.refreshToken;
+        if(!token){
+            return res.status(401).json({ message: "Refresh token not found" });
+        }
+        //compare with refresh token in database
+        const session = await Session.findOne({ refreshToken: token });
+        if(!session){
+            return res.status(403).json({ message: "Invalid refresh token or session expired" });
+        }
+        //check if refresh token is expired
+        if(session.expiresAt < new Date()){
+            return res.status(403).json({ message: "Refresh token expired" });
+        }
+
+        //create new access token
+        const accessToken = jwt.sign(
+            { userId: session.userId },
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: ACCESS_TOKEN_TTL }
+        );
+        //return new access token
+        return res.status(200).json({ message: "Refresh token successful", accessToken });
+
+    } catch (error) {
+        console.error("Error in refreshToken:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
