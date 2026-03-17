@@ -6,6 +6,8 @@ const ProtectedRoute = () => {
     const {accessToken, user, loading, refresh, fetchMe} = useAuthStore();
     const[starting, setStarting] = useState(true);
     const init = async () => {
+
+        //can occur when user refresh the page
         if(!accessToken){
             await refresh();
         }
