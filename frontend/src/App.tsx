@@ -5,8 +5,18 @@ import SignUpPage from "./pages/SignUpPage";
 import { Toaster } from "sonner";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { TooltipProvider } from "./components/ui/tooltip";
+import { useThemeStore } from "./stores/useThemeStore";
+import { useEffect } from "react";
 
 function App() {
+  const{isDark} = useThemeStore();
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [isDark]);
   return (
     <>
       <Toaster richColors />
