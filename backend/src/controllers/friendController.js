@@ -147,7 +147,7 @@ export const getAllFriends = async (req, res) => {
       .lean();
 
     if (!friendships.length) {
-      return res.status(200).json({ friends: [] });
+      return res.status(200).json({ friends: [] }); 
     }
 
     const friends = friendships.map((f) =>

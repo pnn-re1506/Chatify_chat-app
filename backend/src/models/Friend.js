@@ -18,7 +18,7 @@ const friendSchema = new mongoose.Schema(
   }
 );
 
-friendSchema.pre("save", function (next) {
+friendSchema.pre("save", function () {
   const a = this.userA.toString();
   const b = this.userB.toString();
 
@@ -26,8 +26,6 @@ friendSchema.pre("save", function (next) {
     this.userA = new mongoose.Types.ObjectId(b);
     this.userB = new mongoose.Types.ObjectId(a);
   }
-
-  next();
 });
 
 friendSchema.index({ userA: 1, userB: 1 }, { unique: true });

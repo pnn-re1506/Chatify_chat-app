@@ -1,29 +1,21 @@
-import { Logout } from '@/components/auth/Logout'
-import React from 'react'
-import { useAuthStore } from '@/stores/useAuthStore'
-import { authService } from '@/services/authService'
-import api from '@/lib/axios'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
+import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import ChatWindowLayout from "@/components/chat/ChatWindowLayout";
 
 const ChatAppPage = () => { 
-    const user = useAuthStore((state) => state.user);
-    const handleOnClick = async () => {
-        try{
-        await api.get("/users/test", {withCredentials: true});
-        toast.success("Test successful!");
-    }
-        catch(error){
-            toast.error("Test failed!");
-            console.error(error);
-        }
-    }
-  return (
-    <div>
-        {user?.username}<Logout></Logout>
-        <Button onClick={handleOnClick}>test</Button>
-        </div>
-  )
-}
-
-export default ChatAppPage
+    return(
+        <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset className="flex flex-col h-screen overflow-hidden">
+                <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4 bg-background z-10">
+                    <SidebarTrigger className="-ml-1" />
+                    <div className="font-semibold">ChatApp</div>
+                </header>
+                <div className="flex-1 overflow-hidden p-2">
+                    <ChatWindowLayout />
+                </div>
+            </SidebarInset>
+        </SidebarProvider>
+    );
+};
+export default ChatAppPage;
