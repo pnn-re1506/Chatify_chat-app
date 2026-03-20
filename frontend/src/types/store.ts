@@ -1,4 +1,4 @@
-// import type { Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 import type { Conversation, Message } from "./chat";
 import type { Friend, FriendRequest, User } from "./user";
 
@@ -71,12 +71,12 @@ export interface ChatState {
   ) => Promise<void>;
 }
 
-// export interface SocketState {
-//   socket: Socket | null;
-//   onlineUsers: string[];
-//   connectSocket: () => void;
-//   disconnectSocket: () => void;
-// }
+export interface SocketState {
+  socket: Socket | null;
+  onlineUsers: string[];
+  connectSocket: () => void;
+  disconnectSocket: () => void;
+}
 
 export interface FriendState {
   friends: Friend[];
@@ -94,3 +94,4 @@ export interface FriendState {
 export interface UserState {
   updateAvatarUrl: (formData: FormData) => Promise<void>;
 }
+
