@@ -32,7 +32,7 @@ export const useChatStore = create<ChatState>()(
 
           set({ conversations, convoLoading: false });
         } catch (error) {
-          console.error("Lỗi xảy ra khi fetchConversations:", error);
+          console.error("Error when fetchConversations:", error);
           set({ convoLoading: false });
         }
       },
@@ -79,7 +79,7 @@ export const useChatStore = create<ChatState>()(
             };
           });
         } catch (error) {
-          console.error("Lỗi xảy ra khi fetchMessages:", error);
+          console.error("Error when fetchMessages:", error);
         } finally {
           set({ messageLoading: false });
         }
@@ -99,7 +99,7 @@ export const useChatStore = create<ChatState>()(
             ),
           }));
         } catch (error) {
-          console.error("Lỗi xảy ra khi gửi direct message", error);
+          console.error("Error when sending direct message", error);
         }
       },
       sendGroupMessage: async (conversationId, content, imgUrl) => {
@@ -111,7 +111,7 @@ export const useChatStore = create<ChatState>()(
             ),
           }));
         } catch (error) {
-          console.error("Lỗi xảy ra gửi group message", error);
+          console.error("Error when sending group message", error);
         }
       },
       addMessage: async (message) => {
@@ -147,7 +147,7 @@ export const useChatStore = create<ChatState>()(
             };
           });
         } catch (error) {
-          console.error("Lỗi xảy khi ra add message:", error);
+          console.error("Error when add message:", error);
         }
       },
       updateConversation: (conversation) => {
@@ -157,78 +157,78 @@ export const useChatStore = create<ChatState>()(
           ),
         }));
       },
-      markAsSeen: async () => {
-        try {
-          const { user } = useAuthStore.getState();
-          const { activeConversationId, conversations } = get();
+      // markAsSeen: async () => {
+      //   try {
+      //     const { user } = useAuthStore.getState();
+      //     const { activeConversationId, conversations } = get();
 
-          if (!activeConversationId || !user) {
-            return;
-          }
+      //     if (!activeConversationId || !user) {
+      //       return;
+      //     }
 
-          const convo = conversations.find((c) => c._id === activeConversationId);
+      //     const convo = conversations.find((c) => c._id === activeConversationId);
 
-          if (!convo) {
-            return;
-          }
+      //     if (!convo) {
+      //       return;
+      //     }
 
-          if ((convo.unreadCounts?.[user._id] ?? 0) === 0) {
-            return;
-          }
+      //     if ((convo.unreadCounts?.[user._id] ?? 0) === 0) {
+      //       return;
+      //     }
 
-          await chatService.markAsSeen(activeConversationId);
+      //     await chatService.markAsSeen(activeConversationId);
 
-          set((state) => ({
-            conversations: state.conversations.map((c) =>
-              c._id === activeConversationId && c.lastMessage
-                ? {
-                    ...c,
-                    unreadCounts: {
-                      ...c.unreadCounts,
-                      [user._id]: 0,
-                    },
-                  }
-                : c
-            ),
-          }));
-        } catch (error) {
-          console.error("Lỗi xảy ra khi gọi markAsSeen trong store", error);
-        }
-      },
-      addConvo: (convo) => {
-        set((state) => {
-          const exists = state.conversations.some(
-            (c) => c._id.toString() === convo._id.toString()
-          );
+      //     set((state) => ({
+      //       conversations: state.conversations.map((c) =>
+      //         c._id === activeConversationId && c.lastMessage
+      //           ? {
+      //               ...c,
+      //               unreadCounts: {
+      //                 ...c.unreadCounts,
+      //                 [user._id]: 0,
+      //               },
+      //             }
+      //           : c
+      //       ),
+      //     }));
+      //   } catch (error) {
+      //     console.error("Lỗi xảy ra khi gọi markAsSeen trong store", error);
+      //   }
+      // },
+      // addConvo: (convo) => {
+      //   set((state) => {
+      //     const exists = state.conversations.some(
+      //       (c) => c._id.toString() === convo._id.toString()
+      //     );
 
-          return {
-            conversations: exists
-              ? state.conversations
-              : [convo, ...state.conversations],
-            activeConversationId: convo._id,
-          };
-        });
-      },
-      createConversation: async (type, name, memberIds) => {
-        try {
-          set({ loading: true });
-          const conversation = await chatService.createConversation(
-            type,
-            name,
-            memberIds
-          );
+      //     return {
+      //       conversations: exists
+      //         ? state.conversations
+      //         : [convo, ...state.conversations],
+      //       activeConversationId: convo._id,
+      //     };
+      //   });
+      // },
+      // createConversation: async (type, name, memberIds) => {
+      //   try {
+      //     set({ loading: true });
+      //     const conversation = await chatService.createConversation(
+      //       type,
+      //       name,
+      //       memberIds
+      //     );
 
-          get().addConvo(conversation);
+      //     get().addConvo(conversation);
 
-          useSocketStore
-            .getState()
-            .socket?.emit("join-conversation", conversation._id);
-        } catch (error) {
-          console.error("Lỗi xảy ra khi gọi createConversation trong store", error);
-        } finally {
-          set({ loading: false });
-        }
-      },
+      //     useSocketStore
+      //       .getState()
+      //       .socket?.emit("join-conversation", conversation._id);
+      //   } catch (error) {
+      //     console.error("Error when createConversation", error);
+      //   } finally {
+      //     set({ loading: false });
+      //   }
+      // },
     }),
     {
       name: "chat-storage",
