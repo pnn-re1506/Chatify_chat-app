@@ -19,18 +19,15 @@ const MessageItem = ({
   selectedConvo,
   lastMessageStatus,
 }: MessageItemProps) => {
-  // const prev = index + 1 < messages.length ? messages[index + 1] : undefined;
-  const prev = messages[index - 1];
-  const isGroupBreak = index === 0 || message.senderId !== prev?.senderId || new Date(message.createdAt).getTime() -
-      new Date(prev?.createdAt || 0).getTime() >
-      300000; // 5 min;
-  // const isShowTime =
-  //   index === 0 ||
-  //   new Date(message.createdAt).getTime() -
-  //     new Date(prev?.createdAt || 0).getTime() >
-  //     300000; // 5 min
+  const prev = index + 1 < messages.length ? messages[index + 1] : undefined;
 
-  // const isGroupBreak = isShowTime || message.senderId !== prev?.senderId;
+  const isShowTime =
+    index === 0 ||
+    new Date(message.createdAt).getTime() -
+      new Date(prev?.createdAt || 0).getTime() >
+      300000; // 5 phút
+
+  const isGroupBreak = isShowTime || message.senderId !== prev?.senderId;
 
   const participant = selectedConvo.participants.find(
     (p: Participant) => p._id.toString() === message.senderId.toString()
@@ -38,12 +35,12 @@ const MessageItem = ({
 
   return (
     <>
-      {/* time
+      {/* time */}
       {isShowTime && (
         <span className="flex justify-center text-xs text-muted-foreground px-1">
           {formatMessageTime(new Date(message.createdAt))}
         </span>
-      )} */}
+      )}
 
       <div
         className={cn(
@@ -57,14 +54,14 @@ const MessageItem = ({
             {isGroupBreak && (
               <UserAvatar
                 type="chat"
-                name={participant?.displayName ?? "Chatify"}
+                name={participant?.displayName ?? "Moji"}
                 avatarUrl={participant?.avatarUrl ?? undefined}
               />
             )}
           </div>
         )}
 
-        {/* message */}
+        {/* tin nhắn */}
         <div
           className={cn(
             "max-w-xs lg:max-w-md space-y-1 flex flex-col",
@@ -79,13 +76,6 @@ const MessageItem = ({
           >
             <p className="text-sm leading-relaxed break-words">{message.content}</p>
           </Card>
-
-
-            {isGroupBreak && (
-              <span className="text-xs text-muted-foreground px-1">
-                {formatMessageTime(new Date(message.createdAt))}
-              </span>
-            )}
 
           {/* seen/ delivered */}
           {message.isOwn && message._id === selectedConvo.lastMessage?._id && (

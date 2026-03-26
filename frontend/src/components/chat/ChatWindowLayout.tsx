@@ -12,28 +12,28 @@ const ChatWindowLayout = () => {
     activeConversationId,
     conversations,
     messageLoading: loading,
-    messages
-    // markAsSeen,
+    messages,
+    markAsSeen,
   } = useChatStore();
 
   const selectedConvo =
     conversations.find((c) => c._id === activeConversationId) ?? null;
 
-  // useEffect(() => {
-  //   if (!selectedConvo) {
-  //     return;
-  //   }
+  useEffect(() => {
+    if (!selectedConvo) {
+      return;
+    }
 
-  //   const markSeen = async () => {
-  //     try {
-  //       await markAsSeen();
-  //     } catch (error) {
-  //       console.error("Error when markSeen", error);
-  //     }
-  //   };
+    const markSeen = async () => {
+      try {
+        await markAsSeen();
+      } catch (error) {
+        console.error("Error when markSeen", error);
+      }
+    };
 
-  //   markSeen();
-  // }, [markAsSeen, selectedConvo]);
+    markSeen();
+  }, [markAsSeen, selectedConvo]);
 
   if (!selectedConvo) {
     return <ChatWelcomeScreen />;

@@ -1,6 +1,6 @@
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
-// import { io } from "../socket/index.js";
+import { io } from "../socket/index.js";
 
 export const createConversation = async (req, res) => {
   try {
@@ -67,27 +67,27 @@ export const createConversation = async (req, res) => {
       { path: "lastMessage.senderId", select: "displayName avatarUrl" },
     ]);
 
-    // const participants = (conversation.participants || []).map((p) => ({
-    //   _id: p.userId?._id,
-    //   displayName: p.userId?.displayName,
-    //   avatarUrl: p.userId?.avatarUrl ?? null,
-    //   joinedAt: p.joinedAt,
-    // }));
+    const participants = (conversation.participants || []).map((p) => ({
+      _id: p.userId?._id,
+      displayName: p.userId?.displayName,
+      avatarUrl: p.userId?.avatarUrl ?? null,
+      joinedAt: p.joinedAt,
+    }));
 
-    // const formatted = { ...conversation.toObject(), participants };
+    const formatted = { ...conversation.toObject(), participants };
 
-    // if (type === "group") {
-    //   memberIds.forEach((userId) => {
-    //     io.to(userId).emit("new-group", formatted);
-    //   });
-    // }
+    if (type === "group") {
+      memberIds.forEach((userId) => {
+        io.to(userId).emit("new-group", formatted);
+      });
+    }
 
-    // if (type === "direct") {
-    //   io.to(userId).emit("new-group", formatted);
-    //   io.to(memberIds[0]).emit("new-group", formatted);
-    // }
+    if (type === "direct") {
+      io.to(userId).emit("new-group", formatted);
+      io.to(memberIds[0]).emit("new-group", formatted);
+    }
 
-    return res.status(201).json({ conversation}); //: formatted 
+    return res.status(201).json({ conversation: formatted });
   } catch (error) {
     console.error("Error when creating conversation", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -131,8 +131,8 @@ export const getConversations = async (req, res) => {
 
     return res.status(200).json({ conversations: formatted });
   } catch (error) {
-    console.error("Lỗi xảy ra khi lấy conversations", error);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    console.error("Error when getting conversations", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -185,57 +185,57 @@ export const getUserConversationsForSocketIO = async (userId) => {
   }
 };
 
-// export const markAsSeen = async (req, res) => {
-//   try {
-//     const { conversationId } = req.params;
-//     const userId = req.user._id.toString();
+export const markAsSeen = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user._id.toString();
 
-//     const conversation = await Conversation.findById(conversationId).lean();
+    const conversation = await Conversation.findById(conversationId).lean();
 
-//     if (!conversation) {
-//       return res.status(404).json({ message: "Conversation không tồn tại" });
-//     }
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation doesn't exist" });
+    }
 
-//     const last = conversation.lastMessage;
+    const last = conversation.lastMessage;
 
-//     if (!last) {
-//       return res.status(200).json({ message: "Không có tin nhắn để mark as seen" });
-//     }
+    if (!last) {
+      return res.status(200).json({ message: "There is no message to mark as seen" });
+    }
 
-//     if (last.senderId.toString() === userId) {
-//       return res.status(200).json({ message: "Sender không cần mark as seen" });
-//     }
+    if (last.senderId.toString() === userId) {
+      return res.status(200).json({ message: "Sender doesn't need to mark as seen" });
+    }
 
-//     const updated = await Conversation.findByIdAndUpdate(
-//       conversationId,
-//       {
-//         $addToSet: { seenBy: userId },
-//         $set: { [`unreadCounts.${userId}`]: 0 },
-//       },
-//       {
-//         new: true,
-//       },
-//     );
+    const updated = await Conversation.findByIdAndUpdate(
+      conversationId,
+      {
+        $addToSet: { seenBy: userId },
+        $set: { [`unreadCounts.${userId}`]: 0 },
+      },
+      {
+        new: true,
+      },
+    );
 
-//     io.to(conversationId).emit("read-message", {
-//       conversation: updated,
-//       lastMessage: {
-//         _id: updated?.lastMessage._id,
-//         content: updated?.lastMessage.content,
-//         createdAt: updated?.lastMessage.createdAt,
-//         sender: {
-//           _id: updated?.lastMessage.senderId,
-//         },
-//       },
-//     });
+    io.to(conversationId).emit("read-message", {
+      conversation: updated,
+      lastMessage: {
+        _id: updated?.lastMessage._id,
+        content: updated?.lastMessage.content,
+        createdAt: updated?.lastMessage.createdAt,
+        sender: {
+          _id: updated?.lastMessage.senderId,
+        },
+      },
+    });
 
-//     return res.status(200).json({
-//       message: "Marked as seen",
-//       seenBy: updated?.sennBy || [],
-//       myUnreadCount: updated?.unreadCounts[userId] || 0,
-//     });
-//   } catch (error) {
-//     console.error("Lỗi khi mark as seen", error);
-//     return res.status(500).json({ message: "Lỗi hệ thống" });
-//   }
-// };
+    return res.status(200).json({
+      message: "Marked as seen",
+      seenBy: updated?.sennBy || [],
+      myUnreadCount: updated?.unreadCounts[userId] || 0,
+    });
+  } catch (error) {
+    console.error("Error when marking as seen", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};

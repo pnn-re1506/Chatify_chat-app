@@ -61,16 +61,16 @@ export interface ChatState {
   // add message
   addMessage: (message: Message) => Promise<void>;
   // update convo
-  updateConversation: (conversation: Conversation) => void;
-//   markAsSeen: () => Promise<void>;
-//   addConvo: (convo: Conversation) => void;
-//   createConversation: (
-//     type: "group" | "direct",
-//     name: string,
-//     memberIds: string[]
-//   ) => Promise<void>;
-// }
+  updateConversation: (conversation: unknown) => void;
+  markAsSeen: () => Promise<void>;
+  addConvo: (convo: Conversation) => void;
+  createConversation: (
+    type: "group" | "direct",
+    name: string,
+    memberIds: string[]
+  ) => Promise<void>;
 }
+
 export interface SocketState {
   socket: Socket | null;
   onlineUsers: string[];

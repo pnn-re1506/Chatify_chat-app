@@ -32,11 +32,11 @@ export const useAuthStore = create<AuthState>()(
           await authService.signUp(username, password, email, firstName, lastName);
 
           toast.success(
-            "Đăng ký thành công! Bạn sẽ được chuyển sang trang đăng nhập."
+            "Sign up successfully! You will be redirected to the login page."
           );
         } catch (error) {
           console.error(error);
-          toast.error("Đăng ký không thành công");
+          toast.error("Sign up failed!");
         } finally {
           set({ loading: false });
         }
@@ -52,10 +52,10 @@ export const useAuthStore = create<AuthState>()(
           await get().fetchMe();
           useChatStore.getState().fetchConversations();
 
-          toast.success("Chào mừng bạn quay lại với Moji 🎉");
+          toast.success("Welcome back to Chatify 🎉");
         } catch (error) {
           console.error(error);
-          toast.error("Đăng nhập không thành công!");
+          toast.error("Sign in failed!");
         } finally {
           set({ loading: false });
         }
@@ -64,10 +64,10 @@ export const useAuthStore = create<AuthState>()(
         try {
           get().clearState();
           await authService.signOut();
-          toast.success("Logout thành công!");
+          toast.success("Logout successfully!");
         } catch (error) {
           console.error(error);
-          toast.error("Lỗi xảy ra khi logout. Hãy thử lại!");
+          toast.error("Logout failed!");
         }
       },
       fetchMe: async () => {
@@ -79,7 +79,7 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           console.error(error);
           set({ user: null, accessToken: null });
-          toast.error("Lỗi xảy ra khi lấy dữ liệu người dùng. Hãy thử lại!");
+          toast.error("Error when fetching user data. Please try again!");
         } finally {
           set({ loading: false });
         }
@@ -97,7 +97,7 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch (error) {
           console.error(error);
-          toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
+          toast.error("Session expired. Please login again!");
           get().clearState();
         } finally {
           set({ loading: false });
