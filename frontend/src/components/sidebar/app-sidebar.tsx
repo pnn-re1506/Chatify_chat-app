@@ -51,7 +51,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <Switch
                       checked={isDark}
                       onCheckedChange={toggleTheme}
-                      className="data-[state=checked]:bg-background/80"
+                      className="data-[state=checked]:bg-background/60 data-[state=unchecked]:bg-slate-300 dark:data-[state=unchecked]:bg-slate-600"
                     />
                     <Moon className="size-4 text-white/80" />
                   </div>

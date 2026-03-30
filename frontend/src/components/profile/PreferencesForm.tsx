@@ -47,7 +47,7 @@ const PreferencesForm = () => {
               id="theme-toggle"
               checked={isDark}
               onCheckedChange={toggleTheme}
-              className="data-[state=checked]:bg-primary-glow"
+              className="data-[state=checked]:bg-primary-glow data-[state=unchecked]:bg-slate-300 dark:data-[state=unchecked]:bg-slate-700"
             />
             <Moon className="h-4 w-4 text-muted-foreground" />
           </div>
@@ -70,7 +70,7 @@ const PreferencesForm = () => {
             id="online-status"
             checked={onlineStatus}
             onCheckedChange={setOnlineStatus}
-            className="data-[state=checked]:bg-primary-glow"
+            className="data-[state=checked]:bg-primary-glow data-[state=unchecked]:bg-slate-300 dark:data-[state=unchecked]:bg-slate-700"
           />
         </div>
       </CardContent>

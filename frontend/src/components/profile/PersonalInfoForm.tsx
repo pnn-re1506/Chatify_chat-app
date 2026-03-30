@@ -19,10 +19,10 @@ type EditableField = {
 };
 
 const PERSONAL_FIELDS: EditableField[] = [
-  { key: "displayName", label: "Tên hiển thị" },
-  { key: "username", label: "Tên người dùng" },
+  { key: "displayName", label: "Display name" },
+  { key: "username", label: "Username" },
   { key: "email", label: "Email", type: "email" },
-  { key: "phone", label: "Số điện thoại" },
+  { key: "phone", label: "Phone" },
 ];
 
 type Props = {
@@ -46,22 +46,38 @@ const PersonalInfoForm = ({ userInfo }: Props) => {
 
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {PERSONAL_FIELDS.map(({ key, label, type }) => (
-            <div
-              key={key}
-              className="space-y-2"
-            >
-              <Label htmlFor={key}>{label}</Label>
+          {(["displayName", "username"] as const).map((key) => {
+            const field = PERSONAL_FIELDS.find((f) => f.key === key)!;
+            return (
+              <div key={key} className="space-y-2">
+                <Label htmlFor={key}>{field.label}</Label>
+                <Input
+                  id={key}
+                  type={field.type ?? "text"}
+                  value={userInfo[key] ?? ""}
+                  onChange={() => {}}
+                  className="glass-light border-border/30"
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {(["email", "phone"] as const).map((key) => {
+          const field = PERSONAL_FIELDS.find((f) => f.key === key)!;
+          return (
+            <div key={key} className="space-y-2">
+              <Label htmlFor={key}>{field.label}</Label>
               <Input
                 id={key}
-                type={type ?? "text"}
+                type={field.type ?? "text"}
                 value={userInfo[key] ?? ""}
                 onChange={() => {}}
                 className="glass-light border-border/30"
               />
             </div>
-          ))}
-        </div>
+          );
+        })}
 
         <div className="space-y-2">
           <Label htmlFor="bio">Bio</Label>

@@ -117,9 +117,9 @@ const NewGroupChatModal = () => {
             <Input
               id="invite"
               placeholder="Search by display name..."
+              className="glass border-border/50 focus:border-primary/50 transition-smooth"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1"
             />
 
             {/* danh sách gợi ý */}
