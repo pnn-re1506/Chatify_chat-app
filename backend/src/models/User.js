@@ -10,7 +10,19 @@ import mongoose from "mongoose";
 
     hashedPassword: {
         type: String,
-        required: true,
+        required: false,
+    },
+
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true,
+    },
+
+    authProvider: {
+        type: String,
+        enum: ["local", "google"],
+        default: "local",
     },
 
     email: {

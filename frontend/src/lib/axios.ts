@@ -22,7 +22,7 @@ api.interceptors.response.use(async (res) => res, async (error) => {
     const originalRequest = error.config;
 
     //apis don't need to check
-    if(originalRequest.url.includes("/auth/signin") || originalRequest.url.includes("/auth/signup") || originalRequest.url.includes("/auth/refresh")){
+    if(originalRequest.url.includes("/auth/signin") || originalRequest.url.includes("/auth/signup") || originalRequest.url.includes("/auth/refresh") || originalRequest.url.includes("/auth/google") || originalRequest.url.includes("/auth/forgot-password") || originalRequest.url.includes("/auth/verify-otp") || originalRequest.url.includes("/auth/reset-password")){
         return Promise.reject(error);
     }
     originalRequest._retryCount = originalRequest._retryCount || 0;

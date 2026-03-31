@@ -35,13 +35,13 @@ const ProfileCard = ({ user }: ProfileCardProps) => {
         </div>
 
         {/* user info */}
-        <div className="text-center sm:text-left flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-white">
+        <div className="text-center sm:text-left flex-1 min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight text-white truncate">
             {user.displayName}
           </h1>
 
           {user.bio && (
-            <p className="text-white/70 text-sm mt-2 max-w-lg line-clamp-2">
+            <p className="text-white/70 text-sm mt-2 max-w-lg line-clamp-2 break-words">
               {user.bio}
             </p>
           )}

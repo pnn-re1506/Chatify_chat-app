@@ -19,9 +19,9 @@ const ProfileDialog = ({ open, setOpen }: ProfileDialogProps) => {
       open={open}
       onOpenChange={setOpen}
     >
-      <DialogContent className="overflow-y-auto max-h-[95vh] p-0 bg-transparent border-0 shadow-2xl">
-        <div className="bg-gradient-glass">
-          <div className="max-w-4xl mx-auto p-4">
+      <DialogContent className="overflow-hidden w-[95vw] sm:max-w-2xl max-h-[90vh] p-0 bg-transparent border-0 shadow-2xl flex flex-col">
+        <div className="bg-gradient-glass flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="w-full mx-auto p-4 sm:p-6">
             {/* heading */}
             <DialogHeader className="mb-6">
               <DialogTitle className="text-2xl font-bold text-foreground">

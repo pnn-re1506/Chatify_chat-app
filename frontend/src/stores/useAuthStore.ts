@@ -21,7 +21,9 @@ export const useAuthStore = create<AuthState>()(
       clearState: () => {
         set({ accessToken: null, user: null, loading: false });
         useChatStore.getState().reset();
+        const lastUsername = localStorage.getItem("lastUsername");
         localStorage.clear();
+        if (lastUsername) localStorage.setItem("lastUsername", lastUsername);
         sessionStorage.clear();
       },
       signUp: async (username, password, email, firstName, lastName) => {
@@ -55,7 +57,30 @@ export const useAuthStore = create<AuthState>()(
           toast.success("Welcome back to Chatify 🎉");
         } catch (error) {
           console.error(error);
-          toast.error("Sign in failed!");
+          throw error;
+        } finally {
+          set({ loading: false });
+        }
+      },
+      signInWithGoogle: () => {
+        // Redirect to backend Google OAuth endpoint
+        window.location.href = authService.getGoogleAuthUrl();
+      },
+      handleGoogleCallback: async (accessToken) => {
+        try {
+          get().clearState();
+          set({ loading: true });
+
+          get().setAccessToken(accessToken);
+
+          await get().fetchMe();
+          useChatStore.getState().fetchConversations();
+
+          toast.success("Welcome back to Chatify 🎉");
+        } catch (error) {
+          console.error(error);
+          toast.error("Google sign in failed!");
+          get().clearState();
         } finally {
           set({ loading: false });
         }
