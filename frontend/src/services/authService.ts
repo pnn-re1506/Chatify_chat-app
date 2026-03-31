@@ -1,6 +1,6 @@
 import api from "../lib/axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.joinchatify.site/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export const authService = {
     signUp :async (username: string, password: string, email: string, firstName: string, lastName: string) => {
