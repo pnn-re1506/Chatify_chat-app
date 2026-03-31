@@ -90,9 +90,11 @@ const PersonalInfoForm = ({ userInfo }: Props) => {
           />
         </div>
 
-        <Button className="w-full md:w-auto bg-gradient-primary hover:opacity-90 transition-opacity">
-          Save changes
-        </Button>
+        <div className="flex justify-center mt-4">
+          <Button className="w-full md:w-auto min-w-[200px] bg-gradient-primary hover:opacity-90 transition-opacity">
+            Save changes
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
