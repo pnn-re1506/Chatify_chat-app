@@ -83,7 +83,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
         </CardContent>
       </Card>
       <div className="text-xs text-balance px-6 text-center *:[a]:hover:text-primary text-muted-foreground *:[a]:underline *:[a]:underline-offetset-4">
-        By continuing, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+        By continuing, you agree to our <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.
       </div>
     </div>
   );

@@ -5,6 +5,8 @@ import { Toaster } from "sonner";
 import SignUpPage from "./pages/SignUpPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import GoogleCallbackPage from "./pages/GoogleCallbackPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsOfServicePage from "./pages/TermsOfServicePage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { useThemeStore } from "./stores/useThemeStore";
 import { useEffect } from "react";
@@ -49,6 +51,14 @@ function App() {
           <Route
             path="/forgot-password"
             element={<ForgotPasswordPage />}
+          />
+          <Route
+            path="/privacy"
+            element={<PrivacyPolicyPage />}
+          />
+          <Route
+            path="/terms"
+            element={<TermsOfServicePage />}
           />
 
           {/* protectect routes */}
