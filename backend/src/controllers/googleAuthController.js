@@ -7,9 +7,6 @@ import Session from "../models/Session.js";
 const ACCESS_TOKEN_TTL = "30m";
 const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000;
 
-// Lazy singleton — created on first request, AFTER dotenv.config() has run.
-// ESM imports are evaluated before module-level code in server.js,
-// so process.env vars are undefined at import time.
 let _oAuth2Client = null;
 function getOAuth2Client() {
     if (!_oAuth2Client) {
