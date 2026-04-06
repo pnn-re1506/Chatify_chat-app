@@ -12,6 +12,13 @@ interface MessageItemProps {
   lastMessageStatus: "delivered" | "seen";
 }
 
+/** Format exact datetime as Month Day, HH:mm (e.g. March 25, 23:45) */
+const formatExactTime = (date: Date) => {
+  const datePart = date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+  const time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return `${datePart}, ${time}`;
+};
+
 const MessageItem = ({
   message,
   index,
@@ -21,11 +28,19 @@ const MessageItem = ({
 }: MessageItemProps) => {
   const prev = index + 1 < messages.length ? messages[index + 1] : undefined;
 
+  const curDate = new Date(message.createdAt);
+  const prevDate = prev ? new Date(prev.createdAt) : null;
+
+  const isDifferentDay =
+    prevDate !== null &&
+    (curDate.getFullYear() !== prevDate.getFullYear() ||
+      curDate.getMonth() !== prevDate.getMonth() ||
+      curDate.getDate() !== prevDate.getDate());
+
   const isShowTime =
-    index === 0 ||
-    new Date(message.createdAt).getTime() -
-      new Date(prev?.createdAt || 0).getTime() >
-      300000; // 5 phút
+    index === messages.length - 1 ||
+    isDifferentDay ||
+    curDate.getTime() - (prevDate?.getTime() || 0) > 900000; // 15 phút
 
   const isGroupBreak = isShowTime || message.senderId !== prev?.senderId;
 
@@ -33,24 +48,25 @@ const MessageItem = ({
     (p: Participant) => p._id.toString() === message.senderId.toString()
   );
 
+  const hoverTimestamp = (
+    <span
+      className="self-center text-[13px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-150 select-none whitespace-nowrap"
+    >
+      {formatExactTime(new Date(message.createdAt))}
+    </span>
+  );
+
   return (
     <>
-      {/* time */}
-      {isShowTime && (
-        <span className="flex justify-center text-xs text-muted-foreground px-1">
-          {formatMessageTime(new Date(message.createdAt))}
-        </span>
-      )}
-
       <div
         className={cn(
-          "flex gap-2 message-bounce mt-1",
+          "group flex gap-2 message-bounce mt-1 items-center",
           message.isOwn ? "justify-end" : "justify-start"
         )}
       >
         {/* avatar */}
         {!message.isOwn && (
-          <div className="w-8">
+          <div className="w-8 shrink-0">
             {isGroupBreak && (
               <UserAvatar
                 type="chat"
@@ -60,6 +76,9 @@ const MessageItem = ({
             )}
           </div>
         )}
+
+        {/* hover time — left side (for own messages) */}
+        {message.isOwn && hoverTimestamp}
 
         {/* tin nhắn */}
         <div
@@ -71,10 +90,14 @@ const MessageItem = ({
           <Card
             className={cn(
               "p-3",
-              message.isOwn ? "chat-bubble-sent border-0" : "chat-bubble-received"
+              message.isOwn
+                ? "chat-bubble-sent border-0"
+                : "chat-bubble-received"
             )}
           >
-            <p className="text-sm leading-relaxed break-words">{message.content}</p>
+            <p className="text-sm leading-relaxed break-words">
+              {message.content}
+            </p>
           </Card>
 
           {/* seen/ delivered */}
@@ -92,7 +115,17 @@ const MessageItem = ({
             </Badge>
           )}
         </div>
+
+        {/* hover time — right side (for received messages) */}
+        {!message.isOwn && hoverTimestamp}
       </div>
+
+      {/* time divider — rendered AFTER the message in JSX so it appears ABOVE in column-reverse */}
+      {isShowTime && (
+        <span className="flex justify-center text-xs text-muted-foreground px-1 py-1">
+          {formatMessageTime(new Date(message.createdAt))}
+        </span>
+      )}
     </>
   );
 };
