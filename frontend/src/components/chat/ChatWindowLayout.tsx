@@ -4,17 +4,19 @@ import { SidebarInset } from "../ui/sidebar";
 import ChatWindowHeader from "./ChatWindowHeader";
 import ChatWindowBody from "./ChatWindowBody";
 import MessageInput from "./MessageInput";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import ChatWindowSkeleton from "../skeleton/ChatWindowSkeleton";
+import ConversationDetails from "./ConversationDetails";
 
 const ChatWindowLayout = () => {
   const {
     activeConversationId,
     conversations,
     messageLoading: loading,
-    messages,
     markAsSeen,
   } = useChatStore();
+
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const selectedConvo =
     conversations.find((c) => c._id === activeConversationId) ?? null;
@@ -44,9 +46,12 @@ const ChatWindowLayout = () => {
   }
 
   return (
-    <SidebarInset className="flex flex-col h-full flex-1 overflow-hidden rounded-sm shadow-md">
+    <SidebarInset className="relative flex flex-col h-full flex-1 overflow-hidden rounded-sm shadow-md">
       {/* Header */}
-      <ChatWindowHeader chat={selectedConvo} />
+      <ChatWindowHeader
+        chat={selectedConvo}
+        onOpenDetails={() => setIsDetailsOpen(true)}
+      />
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto bg-primary-foreground">
@@ -55,6 +60,12 @@ const ChatWindowLayout = () => {
 
       {/* Footer */}
       <MessageInput selectedConvo={selectedConvo} />
+
+      <ConversationDetails
+        chat={selectedConvo}
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
+      />
     </SidebarInset>
   );
 };
