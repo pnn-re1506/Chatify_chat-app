@@ -1,4 +1,5 @@
 import { useChatStore } from "@/stores/useChatStore";
+import { cn } from "@/lib/utils";
 import type { Conversation } from "@/types/chat";
 import { SidebarTrigger } from "../ui/sidebar";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -11,10 +12,12 @@ import { Info } from "lucide-react";
 
 const ChatWindowHeader = ({
   chat,
-  onOpenDetails,
+  isDetailsOpen,
+  onToggleDetails,
 }: {
   chat?: Conversation;
-  onOpenDetails?: () => void;
+  isDetailsOpen?: boolean;
+  onToggleDetails?: () => void;
 }) => {
   const { conversations, activeConversationId } = useChatStore();
   const { user } = useAuthStore();
@@ -85,10 +88,15 @@ const ChatWindowHeader = ({
             </h2>
           </div>
 
-          {onOpenDetails && (
+          {onToggleDetails && (
             <button
-              onClick={onOpenDetails}
-              className="p-2 text-muted-foreground hover:bg-muted hover:text-foreground rounded-full transition-colors ml-auto"
+              onClick={onToggleDetails}
+              className={cn(
+                "p-2 rounded-full transition-colors ml-auto",
+                isDetailsOpen
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
               aria-label="Conversation details"
             >
               <Info size={20} />

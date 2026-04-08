@@ -1,89 +1,61 @@
 import { useChatStore } from "@/stores/useChatStore";
 import ChatWelcomeScreen from "./ChatWelcomeScreen";
 import MessageItem from "./MessageItem";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import InfiniteScroll from "react-infinite-scroll-component";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { useScrollPagination } from "@/hooks/useScrollPagination";
+import { Loader2 } from "lucide-react";
 
 const ChatWindowBody = () => {
   const {
     activeConversationId,
     conversations,
     messages: allMessages,
+    isFetchingMore,
     fetchMessages,
   } = useChatStore();
-  const [lastMessageStatus, setLastMessageStatus] = useState<"delivered" | "seen">(
-    "delivered"
-  );
 
   const messages = allMessages[activeConversationId!]?.items ?? [];
-  const reversedMessages = [...messages].reverse();
   const hasMore = allMessages[activeConversationId!]?.hasMore ?? false;
+  const isFetching = isFetchingMore[activeConversationId!] ?? false;
   const selectedConvo = conversations.find((c) => c._id === activeConversationId);
-  const key = `chat-scroll-${activeConversationId}`;
 
-  // ref
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const initialScrollDone = useRef(false);
 
-  // seen status
-  useEffect(() => {
-    const lastMessage = selectedConvo?.lastMessage;
-    if (!lastMessage) {
-      return;
-    }
-
-    const seenBy = selectedConvo?.seenBy ?? [];
-
-    setLastMessageStatus(seenBy.length > 0 ? "seen" : "delivered");
-  }, [selectedConvo]);
-
-  // kéo xuống dưới khi load convo
-  useLayoutEffect(() => {
-    if (!messagesEndRef.current) return;
-
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [activeConversationId]);
-
-  const fetchMoreMessages = async () => {
-    if (!activeConversationId) {
-      return;
-    }
-
+  const handleLoadMore = useCallback(async () => {
+    if (!activeConversationId) return;
     try {
       await fetchMessages(activeConversationId);
     } catch (error) {
       console.error("Error when fetch more messages", error);
     }
-  };
+  }, [activeConversationId, fetchMessages]);
 
-  const handleScrollSave = () => {
-    const container = containerRef.current;
-    if (!container || !activeConversationId) {
-      return;
-    }
+  const { scrollToBottom } = useScrollPagination({
+    containerRef,
+    hasMore,
+    isFetching,
+    onLoadMore: handleLoadMore,
+    itemCount: messages.length,
+  });
 
-    sessionStorage.setItem(
-      key,
-      JSON.stringify({
-        scrollTop: container.scrollTop,
-        scrollHeight: container.scrollHeight,
-      })
-    );
-  };
-
+  // Scroll to bottom on conversation switch
   useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    initialScrollDone.current = false;
+  }, [activeConversationId]);
 
-    const item = sessionStorage.getItem(key);
-
-    if (item) {
-      const { scrollTop } = JSON.parse(item);
+  useEffect(() => {
+    if (messages.length > 0 && !initialScrollDone.current) {
       requestAnimationFrame(() => {
-        container.scrollTop = scrollTop;
+        scrollToBottom();
+        initialScrollDone.current = true;
       });
     }
-  }, [messages.length]);
+  }, [messages.length, scrollToBottom]);
+
+  // Seen status
+  const seenBy = selectedConvo?.seenBy ?? [];
+  const lastMessageStatus: "delivered" | "seen" = seenBy.length > 0 ? "seen" : "delivered";
 
   if (!selectedConvo) {
     return <ChatWelcomeScreen />;
@@ -91,7 +63,7 @@ const ChatWindowBody = () => {
 
   if (!messages?.length) {
     return (
-      <div className="flex h-full items-center justify-center text-muted-foreground ">
+      <div className="flex h-full items-center justify-center text-muted-foreground">
         There are no messages in this conversation.
       </div>
     );
@@ -100,36 +72,35 @@ const ChatWindowBody = () => {
   return (
     <div className="p-4 bg-primary-foreground h-full flex flex-col overflow-hidden">
       <div
-        id="scrollableDiv"
         ref={containerRef}
-        onScroll={handleScrollSave}
-        className="flex flex-col-reverse overflow-y-auto overflow-x-hidden beautiful-scrollbar"
+        className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden beautiful-scrollbar"
       >
-        <div ref={messagesEndRef}></div>
-        <InfiniteScroll
-          dataLength={messages.length}
-          next={fetchMoreMessages}
-          hasMore={hasMore}
-          scrollableTarget="scrollableDiv"
-          loader={<p>Loading...</p>}
-          inverse={true}
-          style={{
-            display: "flex",
-            flexDirection: "column-reverse",
-            overflow: "visible",
-          }}
-        >
-          {reversedMessages.map((message, index) => (
-            <MessageItem
-              key={message._id ?? index}
-              message={message}
-              index={index}
-              messages={reversedMessages}
-              selectedConvo={selectedConvo}
-              lastMessageStatus={lastMessageStatus}
-            />
-          ))}
-        </InfiniteScroll>
+        {/* Top loading spinner */}
+        {isFetching && (
+          <div className="flex items-center justify-center py-3 shrink-0">
+            <Loader2 className="size-5 animate-spin text-muted-foreground" />
+            <span className="ml-2 text-xs text-muted-foreground">
+              Loading older messages...
+            </span>
+          </div>
+        )}
+
+        {/* HasMore spacer — prevents content from being flush with top */}
+        {hasMore && !isFetching && (
+          <div className="h-4 shrink-0" />
+        )}
+
+        {/* Messages in chronological order (oldest first) */}
+        {messages.map((message, index) => (
+          <MessageItem
+            key={message._id ?? index}
+            message={message}
+            index={index}
+            messages={messages}
+            selectedConvo={selectedConvo}
+            lastMessageStatus={lastMessageStatus}
+          />
+        ))}
       </div>
     </div>
   );

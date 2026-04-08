@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { cn, formatMessageTime } from "@/lib/utils";
 import type { Conversation, Message, Participant } from "@/types/chat";
 import UserAvatar from "./UserAvatar";
@@ -19,14 +20,15 @@ const formatExactTime = (date: Date) => {
   return `${datePart}, ${time}`;
 };
 
-const MessageItem = ({
+const MessageItem = memo(({
   message,
   index,
   messages,
   selectedConvo,
   lastMessageStatus,
 }: MessageItemProps) => {
-  const prev = index + 1 < messages.length ? messages[index + 1] : undefined;
+  // In chronological order: prev message is the one before (index - 1)
+  const prev = index > 0 ? messages[index - 1] : undefined;
 
   const curDate = new Date(message.createdAt);
   const prevDate = prev ? new Date(prev.createdAt) : null;
@@ -38,9 +40,9 @@ const MessageItem = ({
       curDate.getDate() !== prevDate.getDate());
 
   const isShowTime =
-    index === messages.length - 1 ||
+    index === 0 ||
     isDifferentDay ||
-    curDate.getTime() - (prevDate?.getTime() || 0) > 900000; // 15 phút
+    curDate.getTime() - (prevDate?.getTime() || 0) > 900000; // 15 min
 
   const isGroupBreak = isShowTime || message.senderId !== prev?.senderId;
 
@@ -58,6 +60,13 @@ const MessageItem = ({
 
   return (
     <>
+      {/* Time divider — rendered BEFORE the message in chronological order */}
+      {isShowTime && (
+        <span className="flex justify-center text-xs text-muted-foreground px-1 py-1">
+          {formatMessageTime(new Date(message.createdAt))}
+        </span>
+      )}
+
       <div
         className={cn(
           "group flex gap-2 message-bounce mt-1 items-center",
@@ -80,7 +89,7 @@ const MessageItem = ({
         {/* hover time — left side (for own messages) */}
         {message.isOwn && hoverTimestamp}
 
-        {/* tin nhắn */}
+        {/* message bubble */}
         <div
           className={cn(
             "max-w-xs lg:max-w-md space-y-1 flex flex-col",
@@ -100,7 +109,7 @@ const MessageItem = ({
             </p>
           </Card>
 
-          {/* seen/ delivered */}
+          {/* seen / delivered */}
           {message.isOwn && message._id === selectedConvo.lastMessage?._id && (
             <Badge
               variant="outline"
@@ -119,15 +128,10 @@ const MessageItem = ({
         {/* hover time — right side (for received messages) */}
         {!message.isOwn && hoverTimestamp}
       </div>
-
-      {/* time divider — rendered AFTER the message in JSX so it appears ABOVE in column-reverse */}
-      {isShowTime && (
-        <span className="flex justify-center text-xs text-muted-foreground px-1 py-1">
-          {formatMessageTime(new Date(message.createdAt))}
-        </span>
-      )}
     </>
   );
-};
+});
+
+MessageItem.displayName = "MessageItem";
 
 export default MessageItem;

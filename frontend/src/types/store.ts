@@ -43,6 +43,7 @@ export interface ChatState {
   >;
   activeConversationId: string | null;
   convoLoading: boolean;
+  isFetchingMore: Record<string, boolean>;
   messageLoading: boolean;
   loading: boolean;
   reset: () => void;

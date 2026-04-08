@@ -11,17 +11,19 @@ export const useChatStore = create<ChatState>()(
       conversations: [],
       messages: {},
       activeConversationId: null,
-      convoLoading: false, // convo loading
+      convoLoading: false,
+      isFetchingMore: {},
       messageLoading: false,
       loading: false,
 
-      setActiveConversation: (id) => set({ activeConversationId: id }),
+      setActiveConversation: (id) => set({ activeConversationId: id, messages: {} }),
       reset: () => {
         set({
           conversations: [],
           messages: {},
           activeConversationId: null,
           convoLoading: false,
+          isFetchingMore: {},
           messageLoading: false,
         });
       },
@@ -37,12 +39,14 @@ export const useChatStore = create<ChatState>()(
         }
       },
       fetchMessages: async (conversationId) => {
-        const { activeConversationId, messages } = get();
+        const { activeConversationId, messages, isFetchingMore } = get();
         const { user } = useAuthStore.getState();
 
         const convoId = conversationId ?? activeConversationId;
-
         if (!convoId) return;
+
+        // Prevent duplicate fetches for the same conversation
+        if (isFetchingMore[convoId]) return;
 
         const current = messages?.[convoId];
         const nextCursor =
@@ -50,7 +54,16 @@ export const useChatStore = create<ChatState>()(
 
         if (nextCursor === null) return;
 
-        set({ messageLoading: true });
+        const isInitialLoad = !current || current.items.length === 0;
+
+        // Only show full skeleton for initial page load
+        if (isInitialLoad) {
+          set({ messageLoading: true });
+        }
+
+        set((state) => ({
+          isFetchingMore: { ...state.isFetchingMore, [convoId]: true },
+        }));
 
         try {
           const { messages: fetched, cursor } = await chatService.fetchMessages(
@@ -81,7 +94,10 @@ export const useChatStore = create<ChatState>()(
         } catch (error) {
           console.error("Error when fetchMessages:", error);
         } finally {
-          set({ messageLoading: false });
+          set((state) => ({
+            messageLoading: false,
+            isFetchingMore: { ...state.isFetchingMore, [convoId]: false },
+          }));
         }
       },
       sendDirectMessage: async (recipientId, content, imgUrl) => {

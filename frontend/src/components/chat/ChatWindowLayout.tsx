@@ -12,7 +12,8 @@ const ChatWindowLayout = () => {
   const {
     activeConversationId,
     conversations,
-    messageLoading: loading,
+    messages: allMessages,
+    messageLoading,
     markAsSeen,
   } = useChatStore();
 
@@ -20,6 +21,11 @@ const ChatWindowLayout = () => {
 
   const selectedConvo =
     conversations.find((c) => c._id === activeConversationId) ?? null;
+
+  // Reset panel when conversation changes
+  useEffect(() => {
+    setIsDetailsOpen(false);
+  }, [activeConversationId]);
 
   useEffect(() => {
     if (!selectedConvo) {
@@ -41,32 +47,38 @@ const ChatWindowLayout = () => {
     return <ChatWelcomeScreen />;
   }
 
-  if (loading) {
+  const hasMessages =
+    (allMessages[activeConversationId ?? ""]?.items.length ?? 0) > 0;
+
+  if (messageLoading && !hasMessages) {
     return <ChatWindowSkeleton />;
   }
 
   return (
-    <SidebarInset className="relative flex flex-col h-full flex-1 overflow-hidden rounded-sm shadow-md">
-      {/* Header */}
-      <ChatWindowHeader
-        chat={selectedConvo}
-        onOpenDetails={() => setIsDetailsOpen(true)}
-      />
+    <div className="flex h-full w-full gap-2 overflow-hidden">
+      <SidebarInset className="relative flex flex-col h-full flex-1 min-w-0 overflow-hidden rounded-sm shadow-md">
+        {/* Header */}
+        <ChatWindowHeader
+          chat={selectedConvo}
+          isDetailsOpen={isDetailsOpen}
+          onToggleDetails={() => setIsDetailsOpen((prev) => !prev)}
+        />
 
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto bg-primary-foreground">
-        <ChatWindowBody />
-      </div>
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto bg-primary-foreground">
+          <ChatWindowBody />
+        </div>
 
-      {/* Footer */}
-      <MessageInput selectedConvo={selectedConvo} />
+        {/* Footer */}
+        <MessageInput selectedConvo={selectedConvo} />
+      </SidebarInset>
 
+      {/* Side panel — sits beside the chat, never overlays */}
       <ConversationDetails
         chat={selectedConvo}
         isOpen={isDetailsOpen}
-        onClose={() => setIsDetailsOpen(false)}
       />
-    </SidebarInset>
+    </div>
   );
 };
 
