@@ -64,4 +64,29 @@ export const chatService = {
     const res = await api.post("/conversations", { type, name, memberIds });
     return res.data.conversation;
   },
+
+  async muteConversation(convoId: string, durationMs: number | null) {
+    await api.patch(`/conversations/${convoId}/mute`, { durationMs });
+  },
+
+  async unmuteConversation(convoId: string) {
+    await api.patch(`/conversations/${convoId}/unmute`);
+  },
+
+  async blockUser(convoId: string) {
+    await api.patch(`/conversations/${convoId}/block`);
+  },
+
+  async unblockUser(convoId: string) {
+    await api.patch(`/conversations/${convoId}/unblock`);
+  },
+
+  async deleteConversation(convoId: string) {
+    await api.patch(`/conversations/${convoId}/delete`);
+  },
+
+  async getUserProfile(userId: string) {
+    const res = await api.get(`/users/${userId}/profile`);
+    return res.data.user as { _id: string; displayName: string; avatarUrl?: string; bio?: string };
+  },
 };

@@ -33,6 +33,10 @@ export const sendDirectMessage = async (req, res) => {
       });
     }
 
+    if (conversation.blockedBy && conversation.blockedBy.length > 0) {
+      return res.status(403).json({ message: "This conversation is blocked" });
+    }
+
     const message = await Message.create({
       conversationId: conversation._id,
       senderId,
@@ -60,6 +64,10 @@ export const sendGroupMessage = async (req, res) => {
 
     if (!content) {
       return res.status(400).json("Lack of content");
+    }
+
+    if (conversation.blockedBy && conversation.blockedBy.length > 0) {
+      return res.status(403).json({ message: "This conversation is blocked" });
     }
 
     const message = await Message.create({

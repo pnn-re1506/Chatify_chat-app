@@ -3,6 +3,7 @@ import { io, type Socket } from "socket.io-client";
 import { useAuthStore } from "./useAuthStore";
 import type { SocketState } from "@/types/store";
 import { useChatStore } from "./useChatStore";
+import { playNotificationSound } from "@/lib/notificationSound";
 
 const baseURL = import.meta.env.VITE_SOCKET_URL;
 export const useSocketStore = create<SocketState>((set, get) => ({
@@ -56,6 +57,20 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       }
 
       useChatStore.getState().updateConversation(updatedConversation);
+
+      const { user } = useAuthStore.getState();
+      const isOwn = message.senderId === user?._id;
+      const cachedConvo = useChatStore
+        .getState()
+        .conversations.find((c) => c._id === message.conversationId);
+      const muteExpiry = cachedConvo?.mutedBy?.[user?._id ?? ""];
+      const isMuted =
+        muteExpiry !== undefined &&
+        (muteExpiry === null || new Date(muteExpiry) > new Date());
+
+      if (!isOwn && !isMuted) {
+        playNotificationSound();
+      }
     });
 
     // read message
@@ -69,6 +84,11 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       };
 
       useChatStore.getState().updateConversation(updated);
+    });
+
+    // conversation updated (block/unblock)
+    socket.on("conversation-updated", ({ conversationId, blockedBy }) => {
+      useChatStore.getState().updateConversation({ _id: conversationId, blockedBy });
     });
 
     // new group chat

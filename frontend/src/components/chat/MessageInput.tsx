@@ -2,7 +2,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import type { Conversation } from "@/types/chat";
 import { useState } from "react";
 import { Button } from "../ui/button";
-import { ImagePlus, Send } from "lucide-react";
+import { ImagePlus, Send, ThumbsUp } from "lucide-react";
 import { Input } from "../ui/input";
 import EmojiPicker from "./EmojiPicker";
 import { useChatStore } from "@/stores/useChatStore";
@@ -31,7 +31,24 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
     } catch (error) {
       console.error(error);
       toast.error("Error when sending message. Please try again!");
-    } 
+    }
+  };
+
+  const hasText = value.trim().length > 0;
+
+  const sendLike = async () => {
+    try {
+      if (selectedConvo.type === "direct") {
+        const participants = selectedConvo.participants;
+        const otherUser = participants.filter((p) => p._id !== user._id)[0];
+        await sendDirectMessage(otherUser._id, "👍");
+      } else {
+        await sendGroupMessage(selectedConvo._id, "👍");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error when sending message. Please try again!");
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -75,13 +92,23 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
         </div>
       </div>
 
-      <Button
-        onClick={sendMessage}
-        className="bg-gradient-chat hover:shadow-glow transition-smooth hover:scale-105"
-        disabled={!value.trim()}
-      >
-        <Send className="size-4 text-white" />
-      </Button>
+      {hasText ? (
+        <Button
+          onClick={sendMessage}
+          className="bg-gradient-chat hover:shadow-glow transition-smooth hover:scale-105"
+        >
+          <Send className="size-4 text-white" />
+        </Button>
+      ) : (
+        <Button
+          onClick={sendLike}
+          variant="ghost"
+          size="icon"
+          className="text-primary hover:bg-primary/10 transition-smooth hover:scale-105"
+        >
+          <ThumbsUp className="size-4" />
+        </Button>
+      )}
     </div>
   );
 };

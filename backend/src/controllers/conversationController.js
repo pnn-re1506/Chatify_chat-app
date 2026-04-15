@@ -99,6 +99,7 @@ export const getConversations = async (req, res) => {
     const userId = req.user._id;
     const conversations = await Conversation.find({
       "participants.userId": userId,
+      deletedFor: { $ne: userId },
     })
       .sort({ lastMessageAt: -1, updatedAt: -1 })
       .populate({
@@ -125,6 +126,8 @@ export const getConversations = async (req, res) => {
       return {
         ...convo.toObject(),
         unreadCounts: convo.unreadCounts || {},
+        mutedBy: Object.fromEntries(convo.mutedBy || []),
+        blockedBy: (convo.blockedBy || []).map((id) => id.toString()),
         participants,
       };
     });
@@ -167,6 +170,90 @@ export const getMessages = async (req, res) => {
     });
   } catch (error) {
     console.error("Error when getting messages", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const muteConversation = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { durationMs } = req.body;
+    const userId = req.user._id.toString();
+    const expiry = durationMs === null ? null : new Date(Date.now() + durationMs);
+    await Conversation.findByIdAndUpdate(conversationId, {
+      $set: { [`mutedBy.${userId}`]: expiry },
+    });
+    return res.status(200).json({ message: "Muted" });
+  } catch (error) {
+    console.error("Error when muting conversation", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const unmuteConversation = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user._id.toString();
+    await Conversation.findByIdAndUpdate(conversationId, {
+      $unset: { [`mutedBy.${userId}`]: "" },
+    });
+    return res.status(200).json({ message: "Unmuted" });
+  } catch (error) {
+    console.error("Error when unmuting conversation", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const blockUser = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user._id;
+    const updated = await Conversation.findByIdAndUpdate(
+      conversationId,
+      { $addToSet: { blockedBy: userId } },
+      { new: true }
+    );
+    io.to(conversationId).emit("conversation-updated", {
+      conversationId,
+      blockedBy: (updated.blockedBy || []).map((id) => id.toString()),
+    });
+    return res.status(200).json({ message: "Blocked" });
+  } catch (error) {
+    console.error("Error when blocking user", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const unblockUser = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user._id;
+    const updated = await Conversation.findByIdAndUpdate(
+      conversationId,
+      { $pull: { blockedBy: userId } },
+      { new: true }
+    );
+    io.to(conversationId).emit("conversation-updated", {
+      conversationId,
+      blockedBy: (updated.blockedBy || []).map((id) => id.toString()),
+    });
+    return res.status(200).json({ message: "Unblocked" });
+  } catch (error) {
+    console.error("Error when unblocking user", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const deleteConversationForUser = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user._id;
+    await Conversation.findByIdAndUpdate(conversationId, {
+      $addToSet: { deletedFor: userId },
+    });
+    return res.status(200).json({ message: "Deleted" });
+  } catch (error) {
+    console.error("Error when deleting conversation for user", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

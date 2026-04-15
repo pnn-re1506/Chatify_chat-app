@@ -16,7 +16,10 @@ export const useChatStore = create<ChatState>()(
       messageLoading: false,
       loading: false,
 
-      setActiveConversation: (id) => set({ activeConversationId: id, messages: {} }),
+      setActiveConversation: (id) => set((state) => ({
+        activeConversationId: id,
+        messages: id === state.activeConversationId ? state.messages : {},
+      })),
       reset: () => {
         set({
           conversations: [],
@@ -198,12 +201,12 @@ export const useChatStore = create<ChatState>()(
             conversations: state.conversations.map((c) =>
               c._id === activeConversationId && c.lastMessage
                 ? {
-                    ...c,
-                    unreadCounts: {
-                      ...c.unreadCounts,
-                      [user._id]: 0,
-                    },
-                  }
+                  ...c,
+                  unreadCounts: {
+                    ...c.unreadCounts,
+                    [user._id]: 0,
+                  },
+                }
                 : c
             ),
           }));
@@ -243,6 +246,90 @@ export const useChatStore = create<ChatState>()(
           console.error("Error when createConversation in store", error);
         } finally {
           set({ loading: false });
+        }
+      },
+      muteConversation: async (convoId, durationMs) => {
+        try {
+          await chatService.muteConversation(convoId, durationMs);
+          const { user } = useAuthStore.getState();
+          if (!user) return;
+          const expiry =
+            durationMs === null ? null : new Date(Date.now() + durationMs).toISOString();
+          set((state) => ({
+            conversations: state.conversations.map((c) =>
+              c._id === convoId
+                ? { ...c, mutedBy: { ...c.mutedBy, [user._id]: expiry } }
+                : c
+            ),
+          }));
+        } catch (error) {
+          console.error("Error when muting conversation", error);
+        }
+      },
+      unmuteConversation: async (convoId) => {
+        try {
+          await chatService.unmuteConversation(convoId);
+          const { user } = useAuthStore.getState();
+          if (!user) return;
+          set((state) => ({
+            conversations: state.conversations.map((c) => {
+              if (c._id !== convoId) return c;
+              const mutedBy = { ...c.mutedBy };
+              delete mutedBy[user._id];
+              return { ...c, mutedBy };
+            }),
+          }));
+        } catch (error) {
+          console.error("Error when unmuting conversation", error);
+        }
+      },
+      blockUser: async (convoId) => {
+        try {
+          await chatService.blockUser(convoId);
+          const { user } = useAuthStore.getState();
+          if (!user) return;
+          set((state) => ({
+            conversations: state.conversations.map((c) =>
+              c._id === convoId
+                ? { ...c, blockedBy: [...(c.blockedBy ?? []), user._id] }
+                : c
+            ),
+          }));
+        } catch (error) {
+          console.error("Error when blocking user", error);
+        }
+      },
+      unblockUser: async (convoId) => {
+        try {
+          await chatService.unblockUser(convoId);
+          const { user } = useAuthStore.getState();
+          if (!user) return;
+          set((state) => ({
+            conversations: state.conversations.map((c) =>
+              c._id === convoId
+                ? {
+                  ...c,
+                  blockedBy: (c.blockedBy ?? []).filter((id) => id !== user._id),
+                }
+                : c
+            ),
+          }));
+        } catch (error) {
+          console.error("Error when unblocking user", error);
+        }
+      },
+      deleteConversation: async (convoId) => {
+        try {
+          await chatService.deleteConversation(convoId);
+          set((state) => ({
+            conversations: state.conversations.filter((c) => c._id !== convoId),
+            activeConversationId:
+              state.activeConversationId === convoId
+                ? null
+                : state.activeConversationId,
+          }));
+        } catch (error) {
+          console.error("Error when deleting conversation", error);
         }
       },
     }),

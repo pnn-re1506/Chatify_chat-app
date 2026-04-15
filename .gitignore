@@ -31,3 +31,4 @@ dist-ssr
 *.sw?
 docs/
 .agent/
+.windsurf/

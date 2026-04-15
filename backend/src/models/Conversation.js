@@ -11,8 +11,8 @@ const participantSchema = new mongoose.Schema({
         default: Date.now,
     },
 }
-,
-{_id:false}
+    ,
+    { _id: false }
 );
 
 const groupSchema = new mongoose.Schema({
@@ -25,8 +25,8 @@ const groupSchema = new mongoose.Schema({
         ref: "User",
     },
 }
-,
-{_id:false}
+    ,
+    { _id: false }
 );
 
 const lastMessageSchema = new mongoose.Schema({
@@ -46,8 +46,8 @@ const lastMessageSchema = new mongoose.Schema({
         default: null,
     },
 }
-,
-{_id:false}
+    ,
+    { _id: false }
 );
 
 const conversationSchema = new mongoose.Schema({
@@ -60,9 +60,9 @@ const conversationSchema = new mongoose.Schema({
         type: [participantSchema],
         required: true,
     },
-    group:{
-            type: groupSchema,
-            default: null,
+    group: {
+        type: groupSchema,
+        default: null,
     },
     lastMessageAt: {
         type: Date,
@@ -79,10 +79,25 @@ const conversationSchema = new mongoose.Schema({
         of: Number,
         default: {},
     },
+    mutedBy: {
+        type: Map,
+        of: Date,
+        default: {},
+    },
+    blockedBy: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: "User",
+        default: [],
+    },
+    deletedFor: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: "User",
+        default: [],
+    },
 },
-{timestamps:true}
+    { timestamps: true }
 );
 
-conversationSchema.index({"participants.userId": 1, lastMessageAt: -1});
+conversationSchema.index({ "participants.userId": 1, lastMessageAt: -1 });
 const Conversation = mongoose.model("Conversation", conversationSchema);
 export default Conversation;

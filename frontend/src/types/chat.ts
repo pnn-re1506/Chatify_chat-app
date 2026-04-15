@@ -36,6 +36,8 @@ export interface Conversation {
   seenBy: SeenUser[];
   lastMessage: LastMessage | null;
   unreadCounts: Record<string, number>; // key = userId, value = unread count
+  mutedBy?: Record<string, string | null>; // userId -> ISO expiry date or null (indefinite)
+  blockedBy?: string[]; // userIds who have blocked in this conversation
   createdAt: string;
   updatedAt: string;
 }
