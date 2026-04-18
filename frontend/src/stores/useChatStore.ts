@@ -15,11 +15,12 @@ export const useChatStore = create<ChatState>()(
       isFetchingMore: {},
       messageLoading: false,
       loading: false,
+      replyingTo: null,
 
-      setActiveConversation: (id) => set((state) => ({
+      setActiveConversation: (id) => set({
         activeConversationId: id,
-        messages: id === state.activeConversationId ? state.messages : {},
-      })),
+        replyingTo: null,
+      }),
       reset: () => {
         set({
           conversations: [],
@@ -28,6 +29,7 @@ export const useChatStore = create<ChatState>()(
           convoLoading: false,
           isFetchingMore: {},
           messageLoading: false,
+          replyingTo: null,
         });
       },
       fetchConversations: async () => {
@@ -103,30 +105,34 @@ export const useChatStore = create<ChatState>()(
           }));
         }
       },
-      sendDirectMessage: async (recipientId, content, imgUrl) => {
+      sendDirectMessage: async (recipientId, content, imgUrl, replyTo, forwardedFrom) => {
         try {
           const { activeConversationId } = get();
           await chatService.sendDirectMessage(
             recipientId,
             content,
             imgUrl,
-            activeConversationId || undefined
+            activeConversationId || undefined,
+            replyTo,
+            forwardedFrom
           );
           set((state) => ({
+            replyingTo: null,
             conversations: state.conversations.map((c) =>
-              c._id === activeConversationId ? { ...c, seenBy: [] } : c
+              c._id === activeConversationId ? { ...c, seenBy: {} } : c
             ),
           }));
         } catch (error) {
           console.error("Error when send direct message", error);
         }
       },
-      sendGroupMessage: async (conversationId, content, imgUrl) => {
+      sendGroupMessage: async (conversationId, content, imgUrl, replyTo, forwardedFrom) => {
         try {
-          await chatService.sendGroupMessage(conversationId, content, imgUrl);
+          await chatService.sendGroupMessage(conversationId, content, imgUrl, replyTo, forwardedFrom);
           set((state) => ({
+            replyingTo: null,
             conversations: state.conversations.map((c) =>
-              c._id === get().activeConversationId ? { ...c, seenBy: [] } : c
+              c._id === get().activeConversationId ? { ...c, seenBy: {} } : c
             ),
           }));
         } catch (error) {
@@ -331,6 +337,86 @@ export const useChatStore = create<ChatState>()(
         } catch (error) {
           console.error("Error when deleting conversation", error);
         }
+      },
+      setReplyingTo: (reply) => set({ replyingTo: reply }),
+      toggleReaction: async (messageId, emoji) => {
+        try {
+          await chatService.toggleReaction(messageId, emoji);
+        } catch (error) {
+          console.error("Error when toggling reaction", error);
+        }
+      },
+      unsendMessage: async (messageId) => {
+        try {
+          await chatService.unsendMessage(messageId);
+        } catch (error) {
+          console.error("Error when unsending message", error);
+        }
+      },
+      removeMessage: async (messageId) => {
+        try {
+          await chatService.removeMessage(messageId);
+          const { activeConversationId } = get();
+          if (!activeConversationId) return;
+          set((state) => {
+            const convoMessages = state.messages[activeConversationId];
+            if (!convoMessages) return state;
+            return {
+              messages: {
+                ...state.messages,
+                [activeConversationId]: {
+                  ...convoMessages,
+                  items: convoMessages.items.filter((m) => m._id !== messageId),
+                },
+              },
+            };
+          });
+        } catch (error) {
+          console.error("Error when removing message", error);
+        }
+      },
+      forwardMessage: async (messageId, conversationId) => {
+        try {
+          await chatService.forwardMessage(messageId, conversationId);
+        } catch (error) {
+          console.error("Error when forwarding message", error);
+        }
+      },
+      updateMessageReactions: (messageId, conversationId, reactions) => {
+        set((state) => {
+          const convoMessages = state.messages[conversationId];
+          if (!convoMessages) return state;
+          return {
+            messages: {
+              ...state.messages,
+              [conversationId]: {
+                ...convoMessages,
+                items: convoMessages.items.map((m) =>
+                  m._id === messageId ? { ...m, reactions } : m
+                ),
+              },
+            },
+          };
+        });
+      },
+      markMessageUnsent: (messageId, conversationId) => {
+        set((state) => {
+          const convoMessages = state.messages[conversationId];
+          if (!convoMessages) return state;
+          return {
+            messages: {
+              ...state.messages,
+              [conversationId]: {
+                ...convoMessages,
+                items: convoMessages.items.map((m) =>
+                  m._id === messageId
+                    ? { ...m, content: null, imgUrl: null, deletedAt: new Date().toISOString(), reactions: [] }
+                    : m
+                ),
+              },
+            },
+          };
+        });
       },
     }),
     {

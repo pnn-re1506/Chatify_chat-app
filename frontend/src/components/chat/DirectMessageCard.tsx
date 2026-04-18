@@ -25,7 +25,6 @@ const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
   const {
     activeConversationId,
     setActiveConversation,
-    messages,
     fetchMessages,
     muteConversation,
     unmuteConversation,
@@ -58,8 +57,9 @@ const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
 
   const handleSelectConversation = async (id: string) => {
     setActiveConversation(id);
-    if (!messages[id]) {
-      await fetchMessages();
+    const current = useChatStore.getState().messages[id];
+    if (!current || current.nextCursor === undefined) {
+      await fetchMessages(id);
     }
   };
 

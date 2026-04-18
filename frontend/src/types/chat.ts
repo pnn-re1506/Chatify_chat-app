@@ -33,7 +33,7 @@ export interface Conversation {
   group: Group;
   participants: Participant[];
   lastMessageAt: string;
-  seenBy: SeenUser[];
+  seenBy: Record<string, string>;
   lastMessage: LastMessage | null;
   unreadCounts: Record<string, number>; // key = userId, value = unread count
   mutedBy?: Record<string, string | null>; // userId -> ISO expiry date or null (indefinite)
@@ -46,6 +46,23 @@ export interface ConversationResponse {
   conversations: Conversation[];
 }
 
+export interface Reaction {
+  emoji: string;
+  userId: string;
+}
+
+export interface ReplyTo {
+  messageId: string;
+  content: string;
+  senderId: string;
+  senderName: string;
+}
+
+export interface ForwardedFrom {
+  originalSenderId: string;
+  originalSenderName: string;
+}
+
 export interface Message {
   _id: string;
   conversationId: string;
@@ -55,4 +72,9 @@ export interface Message {
   updatedAt?: string | null;
   createdAt: string;
   isOwn?: boolean;
+  reactions?: Reaction[];
+  replyTo?: ReplyTo | null;
+  forwardedFrom?: ForwardedFrom | null;
+  deletedAt?: string | null;
+  deletedFor?: string[];
 }

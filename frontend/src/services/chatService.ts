@@ -26,13 +26,17 @@ export const chatService = {
     recipientId: string,
     content: string = "",
     imgUrl?: string,
-    conversationId?: string
+    conversationId?: string,
+    replyTo?: { messageId: string },
+    forwardedFrom?: { originalSenderId: string; originalSenderName: string }
   ) {
     const res = await api.post("/messages/direct", {
       recipientId,
       content,
       imgUrl,
       conversationId,
+      replyTo,
+      forwardedFrom,
     });
 
     return res.data.message;
@@ -41,12 +45,16 @@ export const chatService = {
   async sendGroupMessage(
     conversationId: string,
     content: string = "",
-    imgUrl?: string
+    imgUrl?: string,
+    replyTo?: { messageId: string },
+    forwardedFrom?: { originalSenderId: string; originalSenderName: string }
   ) {
     const res = await api.post("/messages/group", {
       conversationId,
       content,
       imgUrl,
+      replyTo,
+      forwardedFrom,
     });
     return res.data.message;
   },
@@ -88,5 +96,25 @@ export const chatService = {
   async getUserProfile(userId: string) {
     const res = await api.get(`/users/${userId}/profile`);
     return res.data.user as { _id: string; displayName: string; avatarUrl?: string; bio?: string };
+  },
+
+  async toggleReaction(messageId: string, emoji: string) {
+    const res = await api.patch(`/messages/${messageId}/react`, { emoji });
+    return res.data.reactions;
+  },
+
+  async unsendMessage(messageId: string) {
+    const res = await api.delete(`/messages/${messageId}/unsend`);
+    return res.data;
+  },
+
+  async removeMessage(messageId: string) {
+    const res = await api.patch(`/messages/${messageId}/remove`);
+    return res.data;
+  },
+
+  async forwardMessage(messageId: string, conversationId: string) {
+    const res = await api.post("/messages/forward", { messageId, conversationId });
+    return res.data.message;
   },
 };

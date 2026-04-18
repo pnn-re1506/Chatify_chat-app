@@ -3,8 +3,10 @@ export const updateConversationAfterCreateMessage = (
   message,
   senderId
 ) => {
+  const newSeenBy = new Map();
+  newSeenBy.set(senderId.toString(), message._id);
   conversation.set({
-    seenBy: [],
+    seenBy: newSeenBy,
     lastMessageAt: message.createdAt,
     lastMessage: {
       _id: message._id,
@@ -29,6 +31,7 @@ export const emitNewMessage = (io, conversation, message) => {
       _id: conversation._id,
       lastMessage: conversation.lastMessage,
       lastMessageAt: conversation.lastMessageAt,
+      seenBy: Object.fromEntries(conversation.seenBy || []),
     },
     unreadCounts: conversation.unreadCounts,
   });

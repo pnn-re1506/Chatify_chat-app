@@ -31,6 +31,12 @@ export interface ThemeState {
   setTheme: (dark: boolean) => void;
 }
 
+export interface ReplyingTo {
+  messageId: string;
+  content: string;
+  senderName: string;
+}
+
 export interface ChatState {
   conversations: Conversation[];
   messages: Record<
@@ -46,6 +52,7 @@ export interface ChatState {
   isFetchingMore: Record<string, boolean>;
   messageLoading: boolean;
   loading: boolean;
+  replyingTo: ReplyingTo | null;
   reset: () => void;
 
   setActiveConversation: (id: string | null) => void;
@@ -54,12 +61,16 @@ export interface ChatState {
   sendDirectMessage: (
     recipientId: string,
     content: string,
-    imgUrl?: string
+    imgUrl?: string,
+    replyTo?: { messageId: string },
+    forwardedFrom?: { originalSenderId: string; originalSenderName: string }
   ) => Promise<void>;
   sendGroupMessage: (
     conversationId: string,
     content: string,
-    imgUrl?: string
+    imgUrl?: string,
+    replyTo?: { messageId: string },
+    forwardedFrom?: { originalSenderId: string; originalSenderName: string }
   ) => Promise<void>;
   // add message
   addMessage: (message: Message) => Promise<void>;
@@ -77,6 +88,13 @@ export interface ChatState {
   blockUser: (convoId: string) => Promise<void>;
   unblockUser: (convoId: string) => Promise<void>;
   deleteConversation: (convoId: string) => Promise<void>;
+  setReplyingTo: (reply: ReplyingTo | null) => void;
+  toggleReaction: (messageId: string, emoji: string) => Promise<void>;
+  unsendMessage: (messageId: string) => Promise<void>;
+  removeMessage: (messageId: string) => Promise<void>;
+  forwardMessage: (messageId: string, conversationId: string) => Promise<void>;
+  updateMessageReactions: (messageId: string, conversationId: string, reactions: Message["reactions"]) => void;
+  markMessageUnsent: (messageId: string, conversationId: string) => void;
 }
 
 export interface SocketState {

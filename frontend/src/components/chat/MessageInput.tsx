@@ -2,7 +2,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import type { Conversation } from "@/types/chat";
 import { useState } from "react";
 import { Button } from "../ui/button";
-import { ImagePlus, Send, ThumbsUp } from "lucide-react";
+import { ImagePlus, Send, ThumbsUp, X, Reply } from "lucide-react";
 import { Input } from "../ui/input";
 import EmojiPicker from "./EmojiPicker";
 import { useChatStore } from "@/stores/useChatStore";
@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   const { user } = useAuthStore();
-  const { sendDirectMessage, sendGroupMessage } = useChatStore();
+  const { sendDirectMessage, sendGroupMessage, replyingTo, setReplyingTo } = useChatStore();
   const [value, setValue] = useState("");
 
   if (!user) return;
@@ -18,15 +18,16 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   const sendMessage = async () => {
     if (!value.trim()) return;
     const currValue = value;
+    const replyTo = replyingTo ? { messageId: replyingTo.messageId } : undefined;
     setValue("");
 
     try {
       if (selectedConvo.type === "direct") {
         const participants = selectedConvo.participants;
         const otherUser = participants.filter((p) => p._id !== user._id)[0];
-        await sendDirectMessage(otherUser._id, currValue);
+        await sendDirectMessage(otherUser._id, currValue, undefined, replyTo);
       } else {
-        await sendGroupMessage(selectedConvo._id, currValue);
+        await sendGroupMessage(selectedConvo._id, currValue, undefined, replyTo);
       }
     } catch (error) {
       console.error(error);
@@ -59,56 +60,81 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   };
 
   return (
-    <div className="flex items-center gap-2 p-3 min-h-[56px] bg-background">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="hover:bg-primary/10 transition-smooth"
-      >
-        <ImagePlus className="size-4" />
-      </Button>
-
-      <div className="flex-1 relative">
-        <Input
-          onKeyPress={handleKeyPress}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="Type a message..."
-          className="pr-20 h-9 bg-white border-border/50 focus:border-primary/50 transition-smooth resize-none"
-        ></Input>
-        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+    <div className="bg-background">
+      {/* Reply preview bar */}
+      {replyingTo && (
+        <div className="flex items-center gap-2 px-3 pt-2 pb-1 border-b border-border/30">
+          <Reply className="size-3.5 text-primary shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-primary truncate">
+              Replying to {replyingTo.senderName}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {replyingTo.content || "Message"}
+            </p>
+          </div>
           <Button
-            asChild
             variant="ghost"
             size="icon"
-            className="size-8 hover:bg-primary/10 transition-smooth"
+            className="size-6 shrink-0 hover:bg-muted"
+            onClick={() => setReplyingTo(null)}
           >
-            <div>
-              <EmojiPicker
-                onChange={(emoji: string) => setValue(`${value}${emoji}`)}
-              />
-            </div>
+            <X className="size-3.5" />
           </Button>
         </div>
-      </div>
+      )}
 
-      {hasText ? (
+      <div className="flex items-center gap-2 p-3 min-h-[56px]">
         <Button
-          onClick={sendMessage}
-          className="bg-gradient-chat hover:shadow-glow transition-smooth hover:scale-105"
-        >
-          <Send className="size-4 text-white" />
-        </Button>
-      ) : (
-        <Button
-          onClick={sendLike}
           variant="ghost"
           size="icon"
-          className="text-primary hover:bg-primary/10 transition-smooth hover:scale-105"
+          className="hover:bg-primary/10 transition-smooth"
         >
-          <ThumbsUp className="size-4" />
+          <ImagePlus className="size-4" />
         </Button>
-      )}
+
+        <div className="flex-1 relative">
+          <Input
+            onKeyPress={handleKeyPress}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="Type a message..."
+            className="pr-20 h-9 bg-white border-border/50 focus:border-primary/50 transition-smooth resize-none"
+          ></Input>
+          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="size-8 hover:bg-primary/10 transition-smooth"
+            >
+              <div>
+                <EmojiPicker
+                  onChange={(emoji: string) => setValue(`${value}${emoji}`)}
+                />
+              </div>
+            </Button>
+          </div>
+        </div>
+
+        {hasText ? (
+          <Button
+            onClick={sendMessage}
+            className="bg-gradient-chat hover:shadow-glow transition-smooth hover:scale-105"
+          >
+            <Send className="size-4 text-white" />
+          </Button>
+        ) : (
+          <Button
+            onClick={sendLike}
+            variant="ghost"
+            size="icon"
+            className="text-primary hover:bg-primary/10 transition-smooth hover:scale-105"
+          >
+            <ThumbsUp className="size-4" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

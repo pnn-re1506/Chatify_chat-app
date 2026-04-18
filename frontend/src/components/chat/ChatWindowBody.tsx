@@ -1,9 +1,12 @@
 import { useChatStore } from "@/stores/useChatStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 import ChatWelcomeScreen from "./ChatWelcomeScreen";
 import MessageItem from "./MessageItem";
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import ForwardMessageDialog from "./ForwardMessageDialog";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useScrollPagination } from "@/hooks/useScrollPagination";
 import { Loader2 } from "lucide-react";
+import type { Participant } from "@/types/chat";
 
 const ChatWindowBody = () => {
   const {
@@ -13,6 +16,7 @@ const ChatWindowBody = () => {
     isFetchingMore,
     fetchMessages,
   } = useChatStore();
+  const { user } = useAuthStore();
 
   const messages = allMessages[activeConversationId!]?.items ?? [];
   const hasMore = allMessages[activeConversationId!]?.hasMore ?? false;
@@ -21,6 +25,7 @@ const ChatWindowBody = () => {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const initialScrollDone = useRef(false);
+  const [forwardingMessageId, setForwardingMessageId] = useState<string | null>(null);
 
   const handleLoadMore = useCallback(async () => {
     if (!activeConversationId) return;
@@ -53,9 +58,39 @@ const ChatWindowBody = () => {
     }
   }, [messages.length, scrollToBottom]);
 
-  // Seen status
-  const seenBy = selectedConvo?.seenBy ?? [];
-  const lastMessageStatus: "delivered" | "seen" = seenBy.length > 0 ? "seen" : "delivered";
+  // Compute per-message seen users from seenBy map { userId -> messageId }
+  // Bug 4: Only attach seen avatars to messages the current user sent
+  const seenByMessageId = useMemo(() => {
+    const seenBy = selectedConvo?.seenBy ?? {};
+    const ownMessageIds = new Set(
+      messages.filter((m) => m.senderId === user?._id).map((m) => m._id)
+    );
+    const result: Record<string, Participant[]> = {};
+
+    for (const [userId, messageId] of Object.entries(seenBy)) {
+      if (userId === user?._id) continue;
+      const msgId = String(messageId);
+      if (!ownMessageIds.has(msgId)) continue;
+      if (!result[msgId]) result[msgId] = [];
+      const participant = selectedConvo?.participants.find(
+        (p) => p._id.toString() === userId
+      );
+      if (participant) {
+        result[msgId].push(participant);
+      }
+    }
+
+    return result;
+  }, [selectedConvo?.seenBy, selectedConvo?.participants, user?._id, messages]);
+
+  const handleScrollToMessage = useCallback((messageId: string) => {
+    const el = document.getElementById(`msg-${messageId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("bg-primary/10");
+      setTimeout(() => el.classList.remove("bg-primary/10"), 1500);
+    }
+  }, []);
 
   if (!selectedConvo) {
     return <ChatWelcomeScreen />;
@@ -98,10 +133,18 @@ const ChatWindowBody = () => {
             index={index}
             messages={messages}
             selectedConvo={selectedConvo}
-            lastMessageStatus={lastMessageStatus}
+            seenUsers={seenByMessageId[message._id] ?? []}
+            onForward={setForwardingMessageId}
+            onScrollToMessage={handleScrollToMessage}
           />
         ))}
       </div>
+
+      <ForwardMessageDialog
+        messageId={forwardingMessageId}
+        open={!!forwardingMessageId}
+        onOpenChange={(open) => { if (!open) setForwardingMessageId(null); }}
+      />
     </div>
   );
 };

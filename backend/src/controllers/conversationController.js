@@ -60,10 +60,6 @@ export const createConversation = async (req, res) => {
 
     await conversation.populate([
       { path: "participants.userId", select: "displayName avatarUrl" },
-      {
-        path: "seenBy",
-        select: "displayName avatarUrl",
-      },
       { path: "lastMessage.senderId", select: "displayName avatarUrl" },
     ]);
 
@@ -109,10 +105,6 @@ export const getConversations = async (req, res) => {
       .populate({
         path: "lastMessage.senderId",
         select: "displayName avatarUrl",
-      })
-      .populate({
-        path: "seenBy",
-        select: "displayName avatarUrl",
       });
 
     const formatted = conversations.map((convo) => {
@@ -127,6 +119,7 @@ export const getConversations = async (req, res) => {
         ...convo.toObject(),
         unreadCounts: convo.unreadCounts || {},
         mutedBy: Object.fromEntries(convo.mutedBy || []),
+        seenBy: Object.fromEntries(convo.seenBy || []),
         blockedBy: (convo.blockedBy || []).map((id) => id.toString()),
         participants,
       };
@@ -296,16 +289,40 @@ export const markAsSeen = async (req, res) => {
     const updated = await Conversation.findByIdAndUpdate(
       conversationId,
       {
-        $addToSet: { seenBy: userId },
-        $set: { [`unreadCounts.${userId}`]: 0 },
+        $set: {
+          [`seenBy.${userId}`]: last._id,
+          [`unreadCounts.${userId}`]: 0,
+        },
       },
       {
         new: true,
       },
-    );
+    ).populate({
+      path: "participants.userId",
+      select: "displayName avatarUrl",
+    });
+
+    const seenByObj = Object.fromEntries(updated?.seenBy || []);
+
+    const participantsMap = {};
+    for (const p of updated?.participants || []) {
+      if (p.userId) {
+        participantsMap[p.userId._id.toString()] = {
+          _id: p.userId._id,
+          displayName: p.userId.displayName,
+          avatarUrl: p.userId.avatarUrl ?? null,
+        };
+      }
+    }
 
     io.to(conversationId).emit("read-message", {
-      conversation: updated,
+      conversation: {
+        _id: updated._id,
+        lastMessageAt: updated.lastMessageAt,
+        unreadCounts: updated.unreadCounts,
+        seenBy: seenByObj,
+      },
+      participants: participantsMap,
       lastMessage: {
         _id: updated?.lastMessage._id,
         content: updated?.lastMessage.content,
@@ -318,8 +335,8 @@ export const markAsSeen = async (req, res) => {
 
     return res.status(200).json({
       message: "Marked as seen",
-      seenBy: updated?.sennBy || [],
-      myUnreadCount: updated?.unreadCounts[userId] || 0,
+      seenBy: seenByObj,
+      myUnreadCount: updated?.unreadCounts?.get?.(userId) || 0,
     });
   } catch (error) {
     console.error("Error when marking as seen", error);

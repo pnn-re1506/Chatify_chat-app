@@ -74,16 +74,25 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     });
 
     // read message
-    socket.on("read-message", ({ conversation, lastMessage }) => {
+    socket.on("read-message", ({ conversation }) => {
       const updated = {
         _id: conversation._id,
-        lastMessage,
         lastMessageAt: conversation.lastMessageAt,
         unreadCounts: conversation.unreadCounts,
         seenBy: conversation.seenBy,
       };
 
       useChatStore.getState().updateConversation(updated);
+    });
+
+    // reaction toggled
+    socket.on("message-reacted", ({ messageId, conversationId, reactions }) => {
+      useChatStore.getState().updateMessageReactions(messageId, conversationId, reactions);
+    });
+
+    // message unsent
+    socket.on("message-unsent", ({ messageId, conversationId }) => {
+      useChatStore.getState().markMessageUnsent(messageId, conversationId);
     });
 
     // conversation updated (block/unblock)
