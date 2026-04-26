@@ -16,6 +16,7 @@ export const useChatStore = create<ChatState>()(
       messageLoading: false,
       loading: false,
       replyingTo: null,
+      highlightedMessageId: null,
 
       setActiveConversation: (id) => set({
         activeConversationId: id,
@@ -30,6 +31,7 @@ export const useChatStore = create<ChatState>()(
           isFetchingMore: {},
           messageLoading: false,
           replyingTo: null,
+          highlightedMessageId: null,
         });
       },
       fetchConversations: async () => {
@@ -417,6 +419,95 @@ export const useChatStore = create<ChatState>()(
             },
           };
         });
+      },
+      setHighlightedMessageId: (id) => set({ highlightedMessageId: id }),
+      pinMessage: async (convoId, messageId) => {
+        try {
+          const pinnedMessages = await chatService.pinMessage(convoId, messageId);
+          set((state) => ({
+            conversations: state.conversations.map((c) =>
+              c._id === convoId ? { ...c, pinnedMessages } : c
+            ),
+          }));
+        } catch (error) {
+          console.error("Error when pinning message", error);
+        }
+      },
+      unpinMessage: async (convoId, messageId) => {
+        try {
+          const pinnedMessages = await chatService.unpinMessage(convoId, messageId);
+          set((state) => ({
+            conversations: state.conversations.map((c) =>
+              c._id === convoId ? { ...c, pinnedMessages } : c
+            ),
+          }));
+        } catch (error) {
+          console.error("Error when unpinning message", error);
+        }
+      },
+      setNickname: async (convoId, userId, nickname) => {
+        try {
+          const nicknames = await chatService.setNickname(convoId, userId, nickname);
+          set((state) => ({
+            conversations: state.conversations.map((c) =>
+              c._id === convoId ? { ...c, nicknames } : c
+            ),
+          }));
+        } catch (error) {
+          console.error("Error when setting nickname", error);
+        }
+      },
+      setQuickReactEmoji: async (convoId, emoji) => {
+        try {
+          await chatService.setQuickReactEmoji(convoId, emoji);
+          set((state) => ({
+            conversations: state.conversations.map((c) =>
+              c._id === convoId ? { ...c, quickReactEmoji: emoji } : c
+            ),
+          }));
+        } catch (error) {
+          console.error("Error when setting quick react emoji", error);
+        }
+      },
+      updateGroupName: async (convoId, name) => {
+        try {
+          await chatService.updateGroupName(convoId, name);
+          set((state) => ({
+            conversations: state.conversations.map((c) =>
+              c._id === convoId
+                ? { ...c, group: { ...c.group, name } }
+                : c
+            ),
+          }));
+        } catch (error) {
+          console.error("Error when updating group name", error);
+        }
+      },
+      addMember: async (convoId, userId) => {
+        try {
+          const participants = await chatService.addMember(convoId, userId);
+          set((state) => ({
+            conversations: state.conversations.map((c) =>
+              c._id === convoId ? { ...c, participants } : c
+            ),
+          }));
+        } catch (error) {
+          console.error("Error when adding member", error);
+        }
+      },
+      leaveGroup: async (convoId) => {
+        try {
+          await chatService.leaveGroup(convoId);
+          set((state) => ({
+            conversations: state.conversations.filter((c) => c._id !== convoId),
+            activeConversationId:
+              state.activeConversationId === convoId
+                ? null
+                : state.activeConversationId,
+          }));
+        } catch (error) {
+          console.error("Error when leaving group", error);
+        }
       },
     }),
     {

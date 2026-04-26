@@ -95,6 +95,16 @@ export interface ChatState {
   forwardMessage: (messageId: string, conversationId: string) => Promise<void>;
   updateMessageReactions: (messageId: string, conversationId: string, reactions: Message["reactions"]) => void;
   markMessageUnsent: (messageId: string, conversationId: string) => void;
+
+  highlightedMessageId: string | null;
+  setHighlightedMessageId: (id: string | null) => void;
+  pinMessage: (convoId: string, messageId: string) => Promise<void>;
+  unpinMessage: (convoId: string, messageId: string) => Promise<void>;
+  setNickname: (convoId: string, userId: string, nickname: string) => Promise<void>;
+  setQuickReactEmoji: (convoId: string, emoji: string) => Promise<void>;
+  updateGroupName: (convoId: string, name: string) => Promise<void>;
+  addMember: (convoId: string, userId: string) => Promise<void>;
+  leaveGroup: (convoId: string) => Promise<void>;
 }
 
 export interface SocketState {

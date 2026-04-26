@@ -95,9 +95,10 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       useChatStore.getState().markMessageUnsent(messageId, conversationId);
     });
 
-    // conversation updated (block/unblock)
-    socket.on("conversation-updated", ({ conversationId, blockedBy }) => {
-      useChatStore.getState().updateConversation({ _id: conversationId, blockedBy });
+    // conversation updated (block/unblock, pin, nickname, emoji, group, members)
+    socket.on("conversation-updated", (data) => {
+      const { conversationId, ...fields } = data;
+      useChatStore.getState().updateConversation({ _id: conversationId, ...fields });
     });
 
     // new group chat

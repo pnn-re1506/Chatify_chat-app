@@ -95,6 +95,20 @@ const conversationSchema = new mongoose.Schema({
         ref: "User",
         default: [],
     },
+    pinnedMessages: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: "Message",
+        default: [],
+    },
+    nicknames: {
+        type: Map,
+        of: String,
+        default: {},
+    },
+    quickReactEmoji: {
+        type: String,
+        default: "👍",
+    },
 },
     { timestamps: true }
 );

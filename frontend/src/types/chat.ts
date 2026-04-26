@@ -38,6 +38,9 @@ export interface Conversation {
   unreadCounts: Record<string, number>; // key = userId, value = unread count
   mutedBy?: Record<string, string | null>; // userId -> ISO expiry date or null (indefinite)
   blockedBy?: string[]; // userIds who have blocked in this conversation
+  pinnedMessages?: string[];
+  nicknames?: Record<string, string>;
+  quickReactEmoji?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -61,6 +64,34 @@ export interface ReplyTo {
 export interface ForwardedFrom {
   originalSenderId: string;
   originalSenderName: string;
+}
+
+export interface SearchResult {
+  _id: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar: string | null;
+  content: string;
+  createdAt: string;
+}
+
+export interface PinnedMessage {
+  _id: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar: string | null;
+  content: string;
+  imgUrl?: string | null;
+  createdAt: string;
+}
+
+export interface MediaItem {
+  _id: string;
+  imgUrl: string;
+  senderId: string;
+  createdAt: string;
 }
 
 export interface Message {

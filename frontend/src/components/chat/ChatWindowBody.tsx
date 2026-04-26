@@ -87,10 +87,21 @@ const ChatWindowBody = () => {
     const el = document.getElementById(`msg-${messageId}`);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
-      el.classList.add("bg-primary/10");
-      setTimeout(() => el.classList.remove("bg-primary/10"), 1500);
+      el.classList.add("message-highlight");
+      setTimeout(() => el.classList.remove("message-highlight"), 2000);
     }
   }, []);
+
+  const highlightedMessageId = useChatStore((s) => s.highlightedMessageId);
+  const setHighlightedMessageId = useChatStore((s) => s.setHighlightedMessageId);
+
+  useEffect(() => {
+    if (!highlightedMessageId) return;
+    requestAnimationFrame(() => {
+      handleScrollToMessage(highlightedMessageId);
+      setTimeout(() => setHighlightedMessageId(null), 2500);
+    });
+  }, [highlightedMessageId, handleScrollToMessage, setHighlightedMessageId]);
 
   if (!selectedConvo) {
     return <ChatWelcomeScreen />;
